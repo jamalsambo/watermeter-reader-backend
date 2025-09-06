@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
@@ -22,7 +23,7 @@ export class SeedAccess1755582300757 implements MigrationInterface {
       `INSERT INTO delegations (id, name, district_id) VALUES  ('6f4ebc9d-b5d5-4d44-aa5d-098fa45932ee', 'Quelimane','4ab6283e-9fbc-4497-b6ce-7de6710272fc')`,
     );
     await queryRunner.query(
-      `INSERT INTO users (id, display_name,username,password,phone,user_type_id,delegation_id) VALUES  
+      `INSERT INTO users (id, display_name, username, password,phone,user_type_id,delegation_id) VALUES  
                         (uuid_generate_v4(), 'Alfeu Junior', 'al@mail.com','$2b$10$JAhhfuBSSOok7rGUFYJmGuLobG/D51228I9TDkJi7lDmA74M3tmwq','845751142','1c8c35ce-a7ed-40fa-a878-f747fe0e663f','6f4ebc9d-b5d5-4d44-aa5d-098fa45932ee')`,
     );
   }
