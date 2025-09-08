@@ -20,4 +20,5 @@ COPY . .
 EXPOSE 9000
 
 # Comando para rodar em modo dev
-CMD ["quasar", "dev",  "-p", "9000", "-H", "0.0.0.0"]
+CMD ["quasar", "build",  "-p", "pwa"]
+
