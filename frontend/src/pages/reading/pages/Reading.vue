@@ -65,7 +65,7 @@
           <div>{{ data?.reader?.displayName }}</div>
         </div>
         <q-separator />
-        <img :src="`${API_URL}/upload/${data?.fotoUrl}`" class="camera-preview q-mt-sm"   />
+        <img :src="`${data?.fotoUrl}`" class="camera-preview q-mt-sm"   />
       </q-card-section>
     </q-card>
     <q-footer bordered class="bg-grey-2 text-right q-pa-sm">
@@ -97,7 +97,7 @@ async function fetchData() {
   try {
     await readingStore.findOne(id);
     data.value = readingStore.reading;
-    
+
   } catch (error) {}
 }
 function openImage(url) {

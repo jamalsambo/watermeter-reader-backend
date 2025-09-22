@@ -161,9 +161,9 @@
       </div>
       <q-footer bordered class="bg-grey-2 text-right q-pa-sm">
         <q-btn color="primary" icon="arrow_back" label="Voltar" @click="router.push('/')"/>
-      </q-footer> 
+      </q-footer>
     </q-card>
-    
+
   </q-page>
 </template>
 
@@ -244,8 +244,8 @@ function deleteHydrometer(id) {
     message: "Deseja remover este hidrômetro?",
     cancel: true,
     persistent: true,
-  }).onOk(async () => {
-    await watermeterStore.delete(id);
+  }).onOk(() => {
+    watermeterStore.delete(id);
     watermeters.value = watermeters.value.filter((h) => h.id !== id);
     notifySuccess("Hidrometro deletado com sucesso");
   });

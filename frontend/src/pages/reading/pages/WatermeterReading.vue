@@ -20,7 +20,7 @@
             label="Fazer Leitura"
             icon="check_circle"
             color="positive"
-           
+            :disable="distance > 500000"
             @click="submitReading"
           />
         </div>

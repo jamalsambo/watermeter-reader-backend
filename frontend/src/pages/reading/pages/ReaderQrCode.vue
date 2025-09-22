@@ -7,16 +7,7 @@
         <div class="text-h6">Cliente: {{ dadosQr.name }}</div>
 
         <q-form @submit.prevent="submitForm">
-          <q-input
-            v-model="reading"
-            label="Leitura (4 dígitos)"
-            type="number"
-            :rules="[(v) => (v && v.toString().length === 4) || 'Insira 4 dígitos']"
-            dense
-            outlined
-          />
-
-          <q-select
+             <q-select
             v-model="typeReading"
             :options="types"
             label="Tipo de Leitura"
@@ -25,20 +16,34 @@
             option-value="id"
             map-options
             outlined
+
           />
 
-          <q-select
-            class="q-mt-md"
-            v-if="typeReading?.name === 'Anomalia'"
-            v-model="anomaly"
-            :options="anomalies"
-            label="Selecione Anomalia"
-            dense
-            option-label="name"
-            option-value="id"
-            map-options=""
-            outlined
-          />
+           <q-select
+    class="q-mt-md"
+    v-if="typeReading?.name === 'Anomalia'"
+    v-model="anomaly"
+    :options="anomalies"
+    label="Selecione Anomalia"
+    dense
+    option-label="name"
+    option-value="id"
+    outlined
+    @update:model-value="handleAnomalyChange"
+  />
+
+  <q-input
+    v-if="!isSpecialAnomaly"
+    class="q-mt-md"
+    v-model="reading"
+    label="Leitura (4 dígitos)"
+    type="number"
+    :rules="[(v) => (v && v.toString().length === 4) || 'Insira 4 dígitos']"
+    dense
+    outlined
+  />
+
+
 
           <!-- Botão que abre a câmera diretamente -->
           <q-btn
@@ -90,6 +95,7 @@ import { useReadingStore } from "../stores";
 import { useAnomalyStore } from "src/pages/anomaly/stores";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import useNotify from "app/composables/UseNotify";
+import { useComposablesStores } from "src/composables";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const route = useRoute();
@@ -98,6 +104,7 @@ const router = useRouter();
 const auth = useAuthStore();
 const readingStore = useReadingStore();
 const anomalyStore = useAnomalyStore();
+const composableStores = useComposablesStores();
 const { notifyError, notifySuccess, notifyInfo } = useNotify();
 
 const watermeterId = ref(route.params.id);
@@ -113,6 +120,29 @@ const fotoFile = ref(null);
 const fotoUrl = ref(null);
 const anomalies = ref([]);
 let leitor = null;
+
+const specialAnomalies = [
+  "Casa Fechada",
+  "Hidrômetro não Localizado",
+  "Hidrômetros Danificado",
+  "Hidrômetro não legível",
+  "Hidrômetro Retirado",
+  "Hidrômetro Ligado do averso",
+  "Ligação Directa",
+  "Ligação Cortada",
+  "Falta de água",
+  "Ligação Duplicada",
+];
+
+const isSpecialAnomaly = computed(() =>
+  specialAnomalies.includes(anomaly.value?.name)
+);
+
+function handleAnomalyChange(val) {
+  if (specialAnomalies.includes(val?.name)) {
+    reading.value = 0; // força leitura para 0
+  }
+}
 
 // iniciar leitor de QR
 onMounted(async () => {
@@ -142,12 +172,25 @@ onMounted(async () => {
 
 // validação do formulário
 const formValido = computed(() => {
-  return (
-    dadosQr.value &&
-    reading.value.toString().length === 4 &&
-    (typeReading.value?.name === "Normal" || anomaly.value) &&
-    fotoFile.value
-  );
+  if (!dadosQr.value || !fotoFile.value) return false;
+
+  // Caso "Normal" -> exige 4 dígitos
+  if (typeReading.value?.name === "Normal") {
+    return reading.value?.toString().length === 4;
+  }
+
+  // Caso "Anomalia"
+  if (typeReading.value?.name === "Anomalia") {
+    if (!anomaly.value) return false; // precisa escolher anomalia
+
+    if (isSpecialAnomaly.value) {
+      return true; // não exige leitura
+    }
+
+    return reading.value?.toString().length === 4; // exige leitura normal
+  }
+
+  return false;
 });
 
 // captura de foto → preview e arquivo
@@ -162,13 +205,16 @@ async function onPhotoCaptured(e) {
   try {
     const API_URL = import.meta.env.VITE_API_URL;
 
-    const { data } = await axios.post(`${API_URL}/upload`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    // const { data } = await axios.post(`${API_URL}/upload`, formData, {
+    //   headers: { "Content-Type": "multipart/form-data" },
+    // });
 
-    fotoUrl.value = data.filename;
+     const publicUrl = await composableStores.uploadFromSupabase(formData, 'student')
+
+    fotoUrl.value = publicUrl;
     notifyInfo("Foto carregada")
   } catch (error) {
+    console.log(error)
     notifyError("Erro ao carregar a foto");
   }
 }

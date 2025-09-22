@@ -29,7 +29,7 @@ services:
       POSTGRES_PASSWORD: Veno@2021
       POSTGRES_DB: adrc
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - ./data:/var/lib/postgresql/data
 

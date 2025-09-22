@@ -28,15 +28,9 @@
                 icon="water_drop"
                 @click="goToReading(h.watermeter.id)"
                 dense
-                v-if="!h.inspection"
+                
               />
-              <q-btn
-                color="green"
-                icon="visibility"
-                @click="router.push(`/readings/${h.watermeter.reading.id}`)"
-                dense
-                v-else
-              />
+
             </q-item-section>
           </q-item>
         </q-list>

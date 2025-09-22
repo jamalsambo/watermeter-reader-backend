@@ -22,6 +22,11 @@ export const useWatermeterStore = defineStore("watermeter", {
       if (error) throw error;
       this.watermeter = data;
     },
+    async delete(id) {
+      const { error } = await api.delete(`/watermeters/${id}`);
+      if (error) throw error;
+      return error
+    },
     async find(params) {
       const { data, error } = await api.get("/watermeters", {params: {...params}});
       if (error) throw error;
