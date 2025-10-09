@@ -7,7 +7,6 @@ import { EmployeeEntity } from './entities/employee.entity';
 import { FindOneOptions, FindOptionsWhere, Repository } from 'typeorm';
 import { CreateEmployeeHasZoneDto } from './dto/create-employee-has-zone.dto';
 import { EmployeeHasZoneEntity } from './entities/has-zones.entity';
-import { RemoveZonesFromEmployeeDto } from './dto/remove-zones-from-employee.dto';
 import { PositionEntity } from './entities/position.entity';
 
 @Injectable()
@@ -21,7 +20,7 @@ export class EmployeesService {
 
     @InjectRepository(PositionEntity)
     private readonly positionRepo: Repository<PositionEntity>,
-  ) { }
+  ) {}
   async create(createEmployeeDto: CreateEmployeeDto) {
     return await this.employeeRepository.save(createEmployeeDto);
   }
@@ -59,7 +58,7 @@ export class EmployeesService {
   }
 
   async remove(id: string): Promise<void> {
-    await this.employeeRepository.delete({ id })
+    await this.employeeRepository.delete({ id });
   }
 
   async addZonesToEmployee(dto: CreateEmployeeHasZoneDto) {
@@ -92,23 +91,11 @@ export class EmployeesService {
     };
   }
 
-  async removeZonesFromEmployee(dto: RemoveZonesFromEmployeeDto) {
-    const { employeeId, zoneIds } = dto;
-
-    const deletions = zoneIds.map((zoneId) => ({
-      employeeId,
-      zoneId,
-    }));
-
-    await this.employeeHasZoneRepo.delete(deletions);
-
-    return {
-      message: 'Zonas removidas com sucesso.',
-      total: deletions.length,
-    };
-  }
+async removeZonesFromEmployee(employeeId: string, zoneId: string) {
+  await this.employeeHasZoneRepo.delete({ employeeId, zoneId });
+}
 
   async findPositions() {
-    return this.positionRepo.find()
+    return this.positionRepo.find();
   }
 }

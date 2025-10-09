@@ -1,15 +1,14 @@
 <template>
   <q-page class="q-pa-md">
     <q-card flat bordered class="q-pa-lg q-mx-auto" style="max-width: 800px">
-<q-card-section>
-  <div class="flex items-center">
-    <q-icon name="supervisor_account" class="q-mr-sm" size="sm" />
-    <span class="text-subtitle1 text-md-h6 text-lg-h5">
-      Alocar Zonas ao Funcionário
-    </span>
-  </div>
-</q-card-section>
-
+      <q-card-section>
+        <div class="flex items-center">
+          <q-icon name="supervisor_account" class="q-mr-sm" size="sm" />
+          <span class="text-subtitle1 text-md-h6 text-lg-h5">
+            Alocar Zonas ao Funcionário
+          </span>
+        </div>
+      </q-card-section>
 
       <q-form @submit.prevent="assignZones" class="q-gutter-md">
         <q-select
@@ -42,7 +41,16 @@
         <q-list bordered separator v-if="assignedZones.length">
           <q-item v-for="zone in assignedZones" :key="zone.id">
             <q-item-section>{{ zone.name }}</q-item-section>
-             <q-item-section side> <q-icon name="delete" @click="removeZones(zone.id)" class="q-mr-sm" /></q-item-section>
+            <q-item-section side>
+              <q-btn
+                flat
+                round
+                dense
+                icon="delete"
+                color="negative"
+                @click.stop="removeZones(zone.id)"
+              />
+            </q-item-section>
           </q-item>
         </q-list>
         <div v-else class="text-grey text-italic q-mt-sm">
@@ -50,8 +58,13 @@
         </div>
       </q-card-section>
       <q-footer bordered class="bg-grey-2 text-right q-pa-sm">
-        <q-btn color="primary" icon="arrow_back" label="Voltar" @click="router.back('/')" />
-      </q-footer> 
+        <q-btn
+          color="primary"
+          icon="arrow_back"
+          label="Voltar"
+          @click="router.back('/')"
+        />
+      </q-footer>
     </q-card>
   </q-page>
 </template>
@@ -62,7 +75,6 @@ import { useRoute, useRouter } from "vue-router";
 import { useComposablesStores } from "app/composables";
 import { useEmployeeStore } from "../stores";
 import { useAuthStore } from "src/pages/auth/store";
-
 
 const router = useRouter();
 const route = useRoute();
@@ -104,7 +116,7 @@ async function assignZones() {
       zoneIds: form.value.zoneIds,
       createdBy: auth.user.sub,
     };
-    await employeeStore.addZones(payload)
+    await employeeStore.addZones(payload);
     // Simulação: adicionar no assignedZones localmente
     const novas = allZones.value.filter((z) =>
       form.value.zoneIds.includes(z.id)
@@ -122,19 +134,12 @@ async function assignZones() {
 }
 
 async function removeZones(zone) {
-try {
-  const arr = Array.isArray(zone) ? zone : [zone];
-
-    const payload = {
-      employeeId: route.params.id, 
-      zoneIds: arr
-    }
-    console.log(payload)
-    await employeeStore.removeZones(payload)
-} catch (error) {
-  console.log(error);
-}
-
+  try {
+    await employeeStore.removeZones(route.params.id, zone);
+     this.assignedZones = this.assignedZones.filter(z => z.id !== zone);
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function fetchData() {

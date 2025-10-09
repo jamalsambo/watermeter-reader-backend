@@ -15,7 +15,6 @@ import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { JwtAuthGuard } from 'src/auth/strategies/jwt-auth.guard';
 import { CreateEmployeeHasZoneDto } from './dto/create-employee-has-zone.dto';
-import { RemoveZonesFromEmployeeDto } from './dto/remove-zones-from-employee.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('employees')
@@ -37,15 +36,9 @@ export class EmployeesController {
     return this.employeesService.addZonesToEmployee(dto);
   }
 
-  @Delete('remove-zones')
-  async removeZones(@Body() dto: RemoveZonesFromEmployeeDto) {
-    console.log(dto)
-    return this.employeesService.removeZonesFromEmployee(dto);
-  }
-
   @Get('positions')
   async findPositions() {
-    return this.employeesService.findPositions()
+    return this.employeesService.findPositions();
   }
 
   @Get(':id')
@@ -61,8 +54,15 @@ export class EmployeesController {
     return this.employeesService.update(id, updateEmployeeDto);
   }
 
-    @Delete(':id')
-    remove(@Param('id', new ParseUUIDPipe()) id: string) {
-      this.employeesService.remove(id)
-    }
+  @Delete(':id')
+  remove(@Param('id', new ParseUUIDPipe()) id: string) {
+    this.employeesService.remove(id);
+  }
+  @Delete('remove-zones/:employeeId/:zoneId')
+  async removeZones(
+    @Param('employeeId', new ParseUUIDPipe()) employeeId: string,
+    @Param('zoneId', new ParseUUIDPipe()) zoneId: string,
+  ) {
+    return this.employeesService.removeZonesFromEmployee(employeeId, zoneId);
+  }
 }

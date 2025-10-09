@@ -17,8 +17,8 @@ export const useEmployeeStore = defineStore('employee', {
       if (error) throw error;
       this.empployee = data;
     },
-     async update(id,params) {
-      const { data, error } = await api.patch(`/employees/${id}`, {...params});
+    async update(id, params) {
+      const { data, error } = await api.patch(`/employees/${id}`, { ...params });
       if (error) throw error;
       this.empployee = data;
     },
@@ -33,7 +33,7 @@ export const useEmployeeStore = defineStore('employee', {
       this.empployee = data;
     },
     async remove(id) {
-       const { data, error } = await api.delete(`/employees/${id}`);
+      const { data, error } = await api.delete(`/employees/${id}`);
       if (error) throw error;
       return data;
     },
@@ -44,11 +44,8 @@ export const useEmployeeStore = defineStore('employee', {
       if (error) throw error;
       return data;
     },
-        async removeZones(params) {
-          console.log(params)
-      const { data, error } = await api.delete("/employees/remove-zones", {
-        ...params,
-      });
+    async removeZones(employee, zone) {
+      const { data, error } = await api.delete(`/employees/remove-zones/${employee}/${zone}`);
       if (error) throw error;
       return data;
     },
