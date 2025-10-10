@@ -27,6 +27,11 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
+  @Get()
+  findAll() {
+    return this.usersService.findAll();
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post('type')
   createUseType(@Body() createUserTypeDto: CreateUserTypeDto) {
@@ -60,6 +65,11 @@ export class UsersController {
     return this.usersService.findOneOrFail({ id });
   }
 
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.usersService.remove(+id);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post(':id/add-permissions')
   addPermissions(
@@ -76,17 +86,5 @@ export class UsersController {
     @Body() permissionIds: any,
   ) {
     return this.usersService.removePermissions(userId, permissionIds);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get()
-  findAll() {
-    return this.usersService.findAll();
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
   }
 }

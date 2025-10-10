@@ -46,8 +46,8 @@ export class UsersService {
     return await this.userTypeRepository.find();
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll() {
+    return this.userRepository.find()
   }
 
   async findOneOrFail(
