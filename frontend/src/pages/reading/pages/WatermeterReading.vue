@@ -1,164 +1,62 @@
 <template>
-  <q-page class="q-pa-md">
-    <q-card flat bordered class="q-pa-lg q-mx-auto" style="max-width: 900px">
-      <q-card-section>
-        <div class="text-h6">
-          <q-icon name="speed" class="q-mr-sm" />
-          Leitura de Hidrômetro
-        </div>
-        <div class="text-subtitle2 text-grey">Hidrômetro #{{ hydrometer?.number }}</div>
-      </q-card-section>
-
-      <q-card-section>
-        <!-- Mapa -->
-        <div id="map" style="height: 400px" class="q-mb-md"></div>
-
-        <div class="row items-center q-gutter-sm q-mt-md">
-          <q-badge outline color="primary"> Distância: {{ distance }} m </q-badge>
-
-          <q-btn
-            label="Fazer Leitura"
-            icon="check_circle"
-            color="positive"
-            :disable="distance > 5"
-            @click="submitReading"
-          />
-        </div>
-      </q-card-section>
-      <q-footer bordered class="bg-grey-2 text-right q-pa-sm">
-        <q-btn
-          color="primary"
-          icon="arrow_back"
-          label="Voltar"
-          @click="router.push('/')"
-        />
-      </q-footer>
-    </q-card>
-  </q-page>
+  <div class="p-4">
+    <h2>Calcular distância até um ponto fixo</h2>
+    <p><strong>Latitude atual:</strong> {{ latitude }}</p>
+    <p><strong>Longitude atual:</strong> {{ longitude }}</p>
+    <p><strong>Distância até o ponto fixo:</strong> {{ distance.toFixed(2) }} metros</p>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from "vue";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import "leaflet-routing-machine";
-import { useWatermeterStore } from "src/pages/watermeter/stores";
-import { useRoute, useRouter } from "vue-router";
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 
-const route = useRoute();
-const router = useRouter();
+// Coordenada fixa (exemplo: um ponto de referência)
+const fixedLat = -25.9655  // exemplo: Maputo
+const fixedLon = 32.5832
 
-const watermeterStore = useWatermeterStore();
+const latitude = ref(null)
+const longitude = ref(null)
+const distance = ref(0)
 
-// Dados simulados do hidrômetro (normalmente vem de API ou route param)
-const { id, inspectionId } = route.params;
-const hydrometer = ref();
+let watchId = null
 
-// Variáveis reativas
-const userLocation = ref(null);
-const distance = ref(Infinity);
-const ready = ref(false);
+// Função para calcular distância entre dois pontos (em metros)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3 // raio da Terra em metros
+  const φ1 = lat1 * Math.PI / 180
+  const φ2 = lat2 * Math.PI / 180
+  const Δφ = (lat2 - lat1) * Math.PI / 180
+  const Δλ = (lon2 - lon1) * Math.PI / 180
 
-let map = null;
-let routeControl = null;
+  const a = Math.sin(Δφ / 2) ** 2 +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) ** 2
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 
-const time = ref(0); // tempo em segundos
-
-async function initMap() {
-  await nextTick();
-
-  map = L.map("map", {
-    zoomControl: true,
-    scrollWheelZoom: true,
-    dragging: true,
-  }).setView([hydrometer.value.lantitude, hydrometer.value.longitude], 17);
-
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap contributors",
-  }).addTo(map);
-
-  // Marcador fixo do hidrômetro
-  L.marker([hydrometer.value.lantitude, hydrometer.value.longitude])
-    .addTo(map)
-    .bindPopup("📍 Hidrômetro")
-    .openPopup();
-
-  // Controle de rota
-  routeControl = L.Routing.control({
-    waypoints: [],
-    createMarker: () => null,
-    addWaypoints: false,
-    draggableWaypoints: false,
-    fitSelectedRoutes: true,
-    show: false,
-    lineOptions: {
-      styles: [{ color: "#2196f3", opacity: 0.8, weight: 6 }],
-    },
-  }).addTo(map);
-
-  // Captura a distância e tempo da rota
-  routeControl.on("routesfound", function (e) {
-    const summary = e.routes[0].summary;
-    distance.value = summary.totalDistance; // metros
-    time.value = summary.totalTime; // segundos
-  });
-
-  // Rastreia localização em tempo real
-  navigator.geolocation.watchPosition(
-    (pos) => {
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
-      userLocation.value = { lat, lon };
-      ready.value = true;
-
-      // Atualiza marcador do usuário
-      if (!map.userMarker) {
-        map.userMarker = L.marker([lat, lon], {
-          title: "Você",
-          icon: L.icon({
-            iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-          }),
-        }).addTo(map);
-      } else {
-        map.userMarker.setLatLng([lat, lon]);
-      }
-
-      // Atualiza rota
-      routeControl.setWaypoints([
-        L.latLng(lat, lon),
-        L.latLng(hydrometer.value.lantitude, hydrometer.value.longitude),
-      ]);
-    },
-    (err) => console.error("Erro ao obter localização:", err),
-    { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
-  );
+  return R * c
 }
 
-// Dispara ao clicar em "Fazer Leitura"
-function submitReading() {
-  router.push(`/inspections/${inspectionId}/readings/watermeter/${id}/qrcode`);
-}
+onMounted(() => {
+  if ('geolocation' in navigator) {
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude: lat, longitude: lon } = pos.coords
+        latitude.value = lat
+        longitude.value = lon
+        console.log(`Posição atual: lat=${lat}, lon=${lon}`)
 
-async function fetchData() {
-  try {
-    await watermeterStore.findOne(id);
-    hydrometer.value = watermeterStore.watermeter;
-  } catch (error) {
-    console.log(error);
+        // Calcular distância entre atual e ponto fixo
+        distance.value = calculateDistance(lat, lon, fixedLat, fixedLon)
+      },
+      (err) => console.error('Erro ao obter localização:', err),
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+    )
+  } else {
+    console.error('Geolocalização não suportada neste dispositivo.')
   }
-}
+})
 
-// Inicializa tudo ao montar o componente
-onMounted(async () => {
-  await fetchData();
-  initMap();
-});
+onBeforeUnmount(() => {
+  if (watchId) navigator.geolocation.clearWatch(watchId)
+})
 </script>
-
-<style scoped>
-#map {
-  width: 100%;
-}
-</style>
