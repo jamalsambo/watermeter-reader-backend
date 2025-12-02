@@ -1,0 +1,8 @@
+authtoken: 2sEBfDY00MTUWHC0KHFxo1cvMrF_3RopjG5Tce44VKuJDx4kT
+tunnels:
+  api:
+    addr: 3001
+    proto: http
+  frontend:
+    addr: 9000
+    proto: http

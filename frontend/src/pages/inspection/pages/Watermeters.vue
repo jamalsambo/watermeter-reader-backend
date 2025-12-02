@@ -6,19 +6,44 @@
           <q-icon name="list" class="q-mr-sm" />
           Hidrômetros - Inspeção {{ rawData?.number }}
         </q-toolbar-title>
+
+        <!-- 🔍 Campo de pesquisa -->
+        <q-input
+          dense
+          filled
+          v-model="search"
+          placeholder="Pesquisar cliente..."
+          class="q-ml-md"
+          style="width: 250px"
+          clearable
+        >
+          <template #append>
+            <q-icon name="search" />
+          </template>
+        </q-input>
       </q-toolbar>
 
       <q-card-section class="q-gutter-md">
-        <q-list bordered separator v-if="rawData?.hasWatermeters">
-          <q-item v-for="h in rawData.hasWatermeters" :key="h.id">
+        <q-list bordered separator v-if="filteredWatermeters.length">
+          <q-item v-for="h in filteredWatermeters" :key="h.id">
             <q-item-section avatar>
               <q-icon name="water" />
             </q-item-section>
 
             <q-item-section>
-              <div class="text-bold">Hidrômetro: {{ h.watermeter.number }}</div>
+              <div class="text-bold">
+                Hidrômetro: {{ h.watermeter.number }}
+              </div>
+
               <div class="text-caption text-grey">
-                Status: {{ h.inspection ? "Feito":"Pendente" }} | Zona: {{ h.watermeter.zone?.name || "N/A" }}
+                Status: {{ h.inspection ? "Feito" : "Pendente" }} |
+                Zona: {{ h.watermeter.zone?.name || "N/A" }}
+              </div>
+
+              <!-- 👇 Último Cliente filtrado -->
+              <div class="text-caption text-primary q-mt-xs">
+                Cliente:
+                {{ h.lastCustomer?.customer?.fullName || "N/A" }}
               </div>
             </q-item-section>
 
@@ -42,22 +67,29 @@
         </q-list>
 
         <div v-else class="text-grey text-italic q-ml-md q-mt-sm">
-          Nenhum hidrômetro atribuído.
+          Nenhum hidrômetro encontrado.
         </div>
       </q-card-section>
     </q-card>
+
     <q-footer bordered class="bg-grey-2 text-right q-pa-sm">
-      <q-btn color="primary" icon="arrow_back" label="Voltar" @click="router.back()" />
+      <q-btn
+        color="primary"
+        icon="arrow_back"
+        label="Voltar"
+        @click="router.back()"
+      />
     </q-footer>
   </q-page>
 </template>
 
+
+
 <script setup>
-import { ref,  onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useInspectionStore } from "../stores";
 import { useAuthStore } from "src/pages/auth/store";
-
 
 const router = useRouter();
 const route = useRoute();
@@ -65,9 +97,40 @@ const route = useRoute();
 const auth = useAuthStore();
 const inspectionStore = useInspectionStore();
 
-// Simulação com dados reais do backend
 const { id } = route.params;
 const rawData = ref();
+const search = ref(""); // 🔍 Campo de pesquisa
+
+function getLastCustomer(hasCustomers = []) {
+  if (!Array.isArray(hasCustomers) || hasCustomers.length === 0) return null;
+  return hasCustomers.at(-1); // Último elemento
+}
+
+// 👉 Hidrômetros + último cliente
+const processedWatermeters = computed(() => {
+  if (!rawData.value?.hasWatermeters) return [];
+
+  return rawData.value.hasWatermeters.map((h) => ({
+    ...h,
+    lastCustomer: getLastCustomer(h.watermeter.hasCustomers),
+  }));
+});
+
+// 👉 🔍 Filtro por nome do cliente OU número do hidrômetro
+const filteredWatermeters = computed(() => {
+  if (!search.value.trim()) return processedWatermeters.value;
+
+  return processedWatermeters.value.filter((h) => {
+    const customerName = h.lastCustomer?.customer?.fullName?.toLowerCase() || "";
+    const meterNumber = h.watermeter.number?.toLowerCase() || "";
+    const term = search.value.toLowerCase();
+
+    return (
+      customerName.includes(term) ||
+      meterNumber.includes(term) // opcional, mas útil
+    );
+  });
+});
 
 function goToReading(h) {
   router.push(`/inspections/${id}/readings/watermeter/${h}`);
