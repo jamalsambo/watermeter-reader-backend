@@ -64,4 +64,5 @@ export class WatermeterEntity {
 
   @OneToMany(() => ReadingEntity, readings => readings.watermeter)
   readings: ReadingEntity[]
+  lastCustomer: CustomerHasWatermeterEntity;
 }

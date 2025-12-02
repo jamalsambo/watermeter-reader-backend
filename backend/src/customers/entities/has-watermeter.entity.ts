@@ -24,11 +24,11 @@ export class CustomerHasWatermeterEntity {
   @Column({ name: 'createdBy', type: 'uuid' })
   createdBy: string;
 
-    @ManyToOne(() => CustomerEntity, watermeter => watermeter.hasWatermeters)
-  @JoinColumn({ name: 'customer_id'})
-  customer: CustomerEntity
+  @ManyToOne(() => CustomerEntity, (watermeter) => watermeter.hasWatermeters)
+  @JoinColumn({ name: 'customer_id' })
+  customer: CustomerEntity;
 
-  @ManyToOne(() => WatermeterEntity, watermeter => watermeter.hasCustomers)
-  @JoinColumn({ name: 'watermeter_id'})
-  watermeter: WatermeterEntity
+  @ManyToOne(() => WatermeterEntity, (watermeter) => watermeter.hasCustomers)
+  @JoinColumn({ name: 'watermeter_id' })
+  watermeter: WatermeterEntity;
 }
